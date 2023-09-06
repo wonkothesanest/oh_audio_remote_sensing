@@ -1,0 +1,9 @@
+Example of how to connect one of the mics to the STD out of headphones on white-walker
+sudo pactl load-module module-loopback source=mic_kitchen sink=alsa_output.platform-bcm2835_audio.analog-stereo
+
+Example of how to add a new microphone to the main system startup file, this is to make a fifo source
+Ideally this would be done in the python script but we were getting errors (it does seem possible).
+sudo pactl load-module module-pipe-source source_name=mic_office_esp32 file=/tmp/mic_office_esp32_fifo format=s16le rate=44100 channels=1
+
+
+Either of these can be added to /etc/pulse/system.pa to make it on boot.
