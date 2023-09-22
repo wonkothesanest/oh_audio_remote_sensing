@@ -48,6 +48,9 @@ RestartSec=2
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/pulseaudio.service
 
+echo "Replacing default.pa in etc directory"
+sudo cp ${ROOT_DIR}/config/pulse/default.pa /etc/pulse/default.pa
+
 # Make the scripts executable
 sudo chmod +x ${ROOT_DIR}/python/audio_porcupine_keyword_spotter.py
 sudo chmod +x ${ROOT_DIR}/python/audio_to_pulse_audio.py

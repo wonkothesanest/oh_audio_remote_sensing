@@ -61,6 +61,8 @@ if __name__ == "__main__":
     threads.append(threading.Thread(target=start_udp_audio_stream, args=(60555, "mic_office_esp32")))
     #start_udp_audio_stream(60555, "mic_office_esp32")
     threads.append(threading.Thread(target=start_udp_audio_stream, args=(60556, "mic_kitchen")))
+    threads.append(threading.Thread(target=start_udp_audio_stream, args=(60557, "mic_livingroom")))
+    threads.append(threading.Thread(target=start_udp_audio_stream, args=(60558, "mic_bedroom")))
 
     for thread in threads:
         thread.daemon = True

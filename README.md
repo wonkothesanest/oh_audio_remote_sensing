@@ -1,5 +1,10 @@
 # oh_audio_remote_sensing
 Collection of home automation scripts to run for monitoring the home and reporting back to the mother ship.
+Now with chat gpt and tts streaming!!
+
+# Chat GPT deps.
+pip install openai nltk pika
+python -m nltk.downloader punkt
 
 
 run the setup script from the main directory for it to install both services.

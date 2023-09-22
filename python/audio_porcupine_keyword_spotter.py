@@ -98,7 +98,7 @@ def listen_to_source(source_name):
 
 def start_service():
     # Replace these with your actual sink names
-    sink_names = [ "mic_kitchen", "mic_office_esp32"]
+    sink_names = [ "mic_kitchen", "mic_office_esp32", "mic_bedroom", "mic_livingroom"]
 
     threads = []
     for sink_name in sink_names:
