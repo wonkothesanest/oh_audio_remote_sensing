@@ -1,0 +1,4 @@
+TODO:
+install rabbit mq with user to enable cross computer comms.
+Run our scripts setup.sh
+

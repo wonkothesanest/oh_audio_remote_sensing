@@ -3,9 +3,14 @@ import argparse
 import openai
 import nltk
 import pika
+import configparser
+
+config = configparser.ConfigParser()
+config.read('/etc/secrets.ini')
+secret_key = config['openai'].get('secret_key')
 
 # Initialize OpenAI API key
-openai.api_key = ''
+openai.api_key = secret_key
 
 def extract_full_sentence(overall_result):
     sentences = nltk.sent_tokenize(overall_result)
@@ -20,6 +25,7 @@ def main():
     parser.add_argument("--assistant_prompt", default="You are a helpful assistant.")
     parser.add_argument("--model", default="gpt-3.5-turbo")
     parser.add_argument("--max_tokens", default=250)
+    parser.add_argument("--voice", default=None)
     args = parser.parse_args()
 
     overall_result = ""

@@ -1,8 +1,13 @@
 # program2.py
 import pika
 import requests
+import configparser
 
-coqui_key = ''
+config = configparser.ConfigParser()
+config.read('/etc/secrets.ini')
+secret_key = config['coqui'].get('secret_key')
+
+coqui_key = secret_key
 voice_id = None
 
 def call_tts(ch, method, properties, body):
