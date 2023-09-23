@@ -3,3 +3,5 @@ install rabbit mq with user to enable cross computer comms.
 Run our scripts setup.sh
 Change mq object to python data objects instead of json
 
+chromecast definitely has network discovery on linux just not windows. 
+Looks like we are good to go!

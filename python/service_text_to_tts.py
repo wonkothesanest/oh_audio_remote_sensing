@@ -26,11 +26,11 @@ class ThreadedConsumer(threading.Thread):
         threading.Thread(target=self.channel.basic_consume(queue=QUEUE_IN_NAME, on_message_callback=self.call_tts, auto_ack=True))
 
     def call_tts(self, ch, method, properties, body):
-        o = json.loads(body)
-        sentence = o["text"]
-        voice_id = o["voice_id"]
-        session_id = o["session_id"]
-        order = o["sentance_index"]
+        data_obj = json.loads(body)
+        sentence = data_obj["text"]
+        voice_id = data_obj["voice_id"]
+        #session_id = o["session_id"]
+        #order = o["sentance_index"]
 
         print(f"Processing sentence: {sentence}")
         try:
@@ -45,7 +45,10 @@ class ThreadedConsumer(threading.Thread):
             connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             channel = connection.channel()
             channel.queue_declare(queue=QUEUE_OUT_NAME)
-            channel.basic_publish(exchange='', routing_key=QUEUE_OUT_NAME, body=response.content)
+            d = json.loads(response.content)
+            # Update will replace the values in the passed in object
+            data_obj.update(d)
+            channel.basic_publish(exchange='', routing_key=QUEUE_OUT_NAME, body=json.dumps(data_obj))
         except requests.RequestException as e:
             print(f"Error calling TTS service: {e}")
         finally:
