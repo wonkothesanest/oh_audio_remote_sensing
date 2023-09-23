@@ -8,10 +8,18 @@ import threading
 
 class ChromecastPlayer(object):
     def __init__(self) -> None:
-        
 
+        self.cast_semaphore = threading.Semaphore()
+        self.cast_semaphore.acquire()
+        self.__setup()
+        self.cast_semaphore.release()
+
+        self.cache = {}  # Cache to store URLs
+        self.current_session_id = None  # Track current session ID
+        self.expected_index = 0  # Expected index for the next URL to play
         #start a thread that wakes up every hour to check on the connection, re establish if not
-        self.reset_thread = threading.Thread(target=self.reset_connection, args=self, daemon=True)
+        self.is_resetting = False
+        self.reset_thread = threading.Thread(target=self.__reset_connection )
         self.reset_thread.start()
 
     def __setup(self) -> None:
@@ -20,9 +28,6 @@ class ChromecastPlayer(object):
         self.cast = chromecasts[0]
         self.cast.wait()
         
-        self.cache = {}  # Cache to store URLs
-        self.current_session_id = None  # Track current session ID
-        self.expected_index = 0  # Expected index for the next URL to play
 
     def play_next(self, url, index, session_id):
         print(f"Requesting {session_id} Track Number {index} to play {url}")
@@ -41,6 +46,7 @@ class ChromecastPlayer(object):
 
     def _play_from_cache(self):
         while self.expected_index in self.cache:
+            self.cast_semaphore.acquire()
             url = self.cache.pop(self.expected_index)
             self.cast.wait()
             isPlaying = self.__isPlaying()
@@ -55,27 +61,29 @@ class ChromecastPlayer(object):
             print(f"Playing index {self.expected_index} and will be enqueueing with {isPlaying}")
             self.cast.media_controller.play_media(url, "audio/mp3", enqueue=isPlaying)
             self.expected_index += 1
-            # Wait for a short duration before checking the next URL
+            self.cast_semaphore.release()
         
     def __isPlaying(self) -> Boolean:
-        return self.cast.media_controller.status.player_state == "PLAYING"
+        player_state = self.cast.media_controller.status.player_state 
+        return player_state == "PLAYING"
 
     def __reset_connection(self):
         while True:
             try:
-                print("Disconnecting and reseting connection")
                 time.sleep(60*60)
                 if( not self.__isPlaying()):
+                    self.cast_semaphore.acquire()
                     self.cast.disconnect()
                     self.__setup()
+                    self.cast_semaphore.release()
             except:
                 continue
 
 # Example usage
-player = ChromecastPlayer()
-player.play_next("https://cdn.pixabay.com/download/audio/2022/11/21/audio_1b7f7e3ca3.mp3", 0, "session1")
-player.play_next("https://cdn.pixabay.com/download/audio/2022/11/21/audio_1b7f7e3ca3.mp3", 1, "session1")
-time.sleep(5)
-player.play_next("https://cdn.pixabay.com/download/audio/2022/11/21/audio_1b7f7e3ca3.mp3", 0, "session2")
-player.play_next("https://cdn.pixabay.com/download/audio/2022/11/21/audio_1b7f7e3ca3.mp3", 1, "session2")
+#player = ChromecastPlayer()
+#player.play_next("https://cdn.pixabay.com/download/audio/2022/11/21/audio_1b7f7e3ca3.mp3", 0, "session1")
+#player.play_next("https://cdn.pixabay.com/download/audio/2022/11/21/audio_1b7f7e3ca3.mp3", 1, "session1")
+#time.sleep(5)
+#player.play_next("https://cdn.pixabay.com/download/audio/2022/11/21/audio_1b7f7e3ca3.mp3", 0, "session2")
+#player.play_next("https://cdn.pixabay.com/download/audio/2022/11/21/audio_1b7f7e3ca3.mp3", 1, "session2")
 

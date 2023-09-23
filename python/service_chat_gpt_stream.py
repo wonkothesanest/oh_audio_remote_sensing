@@ -27,7 +27,7 @@ def chatgpt():
     data = request.json
     text = data.get('text')
     assistant_prompt = data.get('assistant_prompt', "You are a helpful assistant.")
-    model = data.get('model', "gpt-3.5-turbo")
+    model = data.get('model', "gpt-4")
     max_tokens = data.get('max_tokens', 250)
     voice_id = data.get('voice_id', '774437df-2959-4a01-8a44-a93097f8e8d5')
 
@@ -42,11 +42,12 @@ def chatgpt():
     channel.queue_declare(queue='chatgpt_response')
 
     # Connect to ChatGPT API in streaming mode
-    additional_prompt = f"\n keep your response to less than {max_tokens}"
+    additional_prompt = f"\n keep your response to less than {max_tokens} tokens"
     messages = [
             {"role": "system", "content": assistant_prompt + additional_prompt},
             {"role": "user", "content": text}
         ]
+    #print(messages)
     response = openai.ChatCompletion.create(
         model=model,
         messages=messages,
@@ -85,4 +86,4 @@ def chatgpt():
     return jsonify({"message": "Processed", "result": full_result})
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0")
