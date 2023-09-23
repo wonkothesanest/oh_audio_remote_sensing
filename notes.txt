@@ -1,4 +1,5 @@
 TODO:
 install rabbit mq with user to enable cross computer comms.
 Run our scripts setup.sh
+Change mq object to python data objects instead of json
 

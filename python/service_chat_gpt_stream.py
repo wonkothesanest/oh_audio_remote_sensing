@@ -29,7 +29,7 @@ def main():
     parser.add_argument("--assistant_prompt", default="You are a helpful assistant.")
     parser.add_argument("--model", default="gpt-3.5-turbo")
     parser.add_argument("--max_tokens", default=250)
-    parser.add_argument("--voice", default=None)
+    parser.add_argument("--voice_id", default='774437df-2959-4a01-8a44-a93097f8e8d5')
     args = parser.parse_args()
 
     voice_id = args.voice_id
@@ -44,12 +44,14 @@ def main():
     channel.queue_declare(queue='chatgpt_response')
 
     # Connect to ChatGPT API in streaming mode
-    response = openai.ChatCompletion.create(
-        model=args.model,
-        messages=[
+    messages = [
             {"role": "system", "content": args.assistant_prompt},
             {"role": "user", "content": args.text}
-        ],
+        ]
+    print(f"sending the content to open ai: \n{messages}")
+    response = openai.ChatCompletion.create(
+        model=args.model,
+        messages=messages,
         max_tokens=args.max_tokens,
         stream=True
     )
@@ -69,11 +71,15 @@ def main():
         sentence = extract_full_sentence(overall_result)
         while sentence:
             overall_result = overall_result[len(sentence):]
-            channel.basic_publish(exchange='', routing_key='chatgpt_stream', body={"voice_id": voice_id, "text": sentence, "sentance_index": sentence_order, "session_id":session_id})
+            data = {"voice_id": voice_id, "text": sentence, "sentance_index": sentence_order, "session_id":session_id}
+            print(f"Publishing: {data}")
+            channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
             sentence_order += 1
             sentence = extract_full_sentence(overall_result)
     if(overall_result != None and overall_result != ""):
-        channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps({"voice_id": voice_id, "text": sentence, "sentance_index": sentence_order, "session_id":session_id}))
+        data = {"voice_id": voice_id, "text": overall_result, "sentance_index": sentence_order, "session_id":session_id}
+        print(f"publishing: {data}")
+        channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
         sentence_order += 1
 
     print(f"Fully processed this text: {full_result}")
