@@ -4,14 +4,14 @@ import os
 
 FIFO_PATH = "/tmp/audio_fifo"
 
-if not os.path.exists(FIFO_PATH):
-    os.mkfifo(FIFO_PATH)
+# if not os.path.exists(FIFO_PATH):
+#     os.mkfifo(FIFO_PATH)
 
 def write_audio_to_fifo(ch, method, properties, body):
-    audio_data = body
-    with open(FIFO_PATH, 'wb') as fifo:
-        fifo.write(audio_data)
-    print(f"Audio Data has been processed.")
+    # audio_data = body
+    # with open(FIFO_PATH, 'wb') as fifo:
+    #     fifo.write(audio_data)
+    print(f"Audio Data has been processed. {body}")
 
 if __name__ == "__main__":
     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
