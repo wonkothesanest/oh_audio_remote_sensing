@@ -1,11 +1,12 @@
-# program1.py
-import argparse
+from flask import Flask, request, jsonify
 import uuid
 import openai
 import nltk
 import pika
 import configparser
 import json
+
+app = Flask(__name__)
 
 config = configparser.ConfigParser()
 config.read('/etc/secrets.ini')
@@ -21,18 +22,15 @@ def extract_full_sentence(overall_result):
         return sentences[0]
     return None
 
-def main():
-    global voice_id
-    # Arguments
-    parser = argparse.ArgumentParser("Accept command-line input and call ChatGPT")
-    parser.add_argument("--text", required=True)
-    parser.add_argument("--assistant_prompt", default="You are a helpful assistant.")
-    parser.add_argument("--model", default="gpt-3.5-turbo")
-    parser.add_argument("--max_tokens", default=250)
-    parser.add_argument("--voice_id", default='774437df-2959-4a01-8a44-a93097f8e8d5')
-    args = parser.parse_args()
+@app.route('/chatgpt/stream-to-audio', methods=['POST'])
+def chatgpt():
+    data = request.json
+    text = data.get('text')
+    assistant_prompt = data.get('assistant_prompt', "You are a helpful assistant.")
+    model = data.get('model', "gpt-3.5-turbo")
+    max_tokens = data.get('max_tokens', 250)
+    voice_id = data.get('voice_id', '774437df-2959-4a01-8a44-a93097f8e8d5')
 
-    voice_id = args.voice_id
     overall_result = ""
     full_result = ""
     sentence_order = 0
@@ -44,15 +42,15 @@ def main():
     channel.queue_declare(queue='chatgpt_response')
 
     # Connect to ChatGPT API in streaming mode
+    additional_prompt = f"\n keep your response to less than {max_tokens}"
     messages = [
-            {"role": "system", "content": args.assistant_prompt},
-            {"role": "user", "content": args.text}
+            {"role": "system", "content": assistant_prompt + additional_prompt},
+            {"role": "user", "content": text}
         ]
-    print(f"sending the content to open ai: \n{messages}")
     response = openai.ChatCompletion.create(
-        model=args.model,
+        model=model,
         messages=messages,
-        max_tokens=args.max_tokens,
+        max_tokens=max_tokens,
         stream=True
     )
 
@@ -72,21 +70,19 @@ def main():
         while sentence:
             overall_result = overall_result[len(sentence):]
             data = {"voice_id": voice_id, "text": sentence, "sentance_index": sentence_order, "session_id":session_id}
-            print(f"Publishing: {data}")
             channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
             sentence_order += 1
             sentence = extract_full_sentence(overall_result)
     if(overall_result != None and overall_result != ""):
         data = {"voice_id": voice_id, "text": overall_result, "sentance_index": sentence_order, "session_id":session_id}
-        print(f"publishing: {data}")
         channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
         sentence_order += 1
 
-    print(f"Fully processed this text: {full_result}")
-    
     channel.basic_publish(exchange='', routing_key='chatgpt_response', body=full_result)
 
     connection.close()
 
+    return jsonify({"message": "Processed", "result": full_result})
+
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)

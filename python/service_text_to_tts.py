@@ -8,7 +8,7 @@ import json
 RABBIT_URL = 'amqp://nuvihermoth:D0nn1eDarkoisRabbitFrank@rabbit-cluster-external-stage-1443209739.us-east-1.elb.amazonaws.com'
 # ROUTING_KEY = 'throttle.compact_social_activity.throttled'
 QUEUE_IN_NAME = 'chatgpt_stream'
-QUEUE_OUT_NAME = 'tts_output'
+QUEUE_OUT_NAME = 'coqui_tts_response'
 # EXCHANGE = 'events'
 THREADS = 5
 
@@ -60,6 +60,7 @@ class ThreadedConsumer(threading.Thread):
     
 if __name__ == "__main__":
     for i in range(THREADS):
+        # nifty trick as pika is not naturally thread safe.
         print ('launch thread', i)
         td = ThreadedConsumer()
         td.start()
