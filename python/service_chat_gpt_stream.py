@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from flask import Flask, request, jsonify
 import uuid
 import openai
@@ -47,13 +49,14 @@ def chatgpt():
             {"role": "system", "content": assistant_prompt + additional_prompt},
             {"role": "user", "content": text}
         ]
-    #print(messages)
+    print(messages)
     response = openai.ChatCompletion.create(
         model=model,
         messages=messages,
         max_tokens=max_tokens,
         stream=True
     )
+    print("processed response")
 
     session_id = str(uuid.uuid4())
 

@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # program2.py
 import threading
 import pika

@@ -26,7 +26,7 @@ Requires=pulseaudio.service
 
 [Service]
 ExecStart=${ROOT_DIR}/python/audio_to_pulse_audio.py
-User=pi
+User=dusty
 Restart=always
 RestartSec=2
 
@@ -41,12 +41,13 @@ Requires=networking.service
 [Service]
 Type=simple
 ExecStart=/usr/bin/pulseaudio --disallow-exit=true --disable-shm=true --exit-idle-time=-1
-User=pi
+User=dusty
 Restart=always
 RestartSec=2
 
 [Install]
 WantedBy=multi-user.target" | sudo tee /etc/systemd/system/pulseaudio.service
+
 
 echo "Replacing default.pa in etc directory"
 sudo cp ${ROOT_DIR}/config/pulse/default.pa /etc/pulse/default.pa
