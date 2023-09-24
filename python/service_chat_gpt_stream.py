@@ -17,12 +17,22 @@ secret_key = config['openai'].get('secret_key')
 # Initialize OpenAI API key
 openai.api_key = secret_key
 
+cache = {}
+cache_semaphore = threading.Semaphore()
+
 def extract_full_sentence(overall_result):
     # Use NLTK to tokenize the text into sentences
     sentences = nltk.sent_tokenize(overall_result)
     if sentences and len(sentences) > 1:
         return sentences[0]
     return None
+
+def __add_to_cache(user: str, voice_id: str, value: str)->None:
+    cache_semaphore.acquire()
+    cache[voice_id] = cache[voice_id] if cache[voice_id] else []
+    cache[voice_id].append(text)
+    cache_semaphore.release()
+
 
 @app.route('/chatgpt/stream-to-audio', methods=['POST'])
 def chatgpt():
@@ -32,6 +42,7 @@ def chatgpt():
     model = data.get('model', "gpt-4")
     max_tokens = data.get('max_tokens', 250)
     voice_id = data.get('voice_id', '774437df-2959-4a01-8a44-a93097f8e8d5')
+    __add_to_cache("user", voice_id, text)
 
     overall_result = ""
     full_result = ""
@@ -83,6 +94,7 @@ def chatgpt():
         sentence_order += 1
 
     channel.basic_publish(exchange='', routing_key='chatgpt_response', body=full_result)
+    __add_to_cache("assistant", voice_id, full_result)
 
     connection.close()
 
