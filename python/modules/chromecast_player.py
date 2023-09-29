@@ -24,7 +24,7 @@ class ChromecastPlayer(object):
 
     def __setup(self) -> None:
         print(f"Setting up or resetting player")
-        chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=["All Speakers"], known_hosts="192.168.0.3")
+        chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=["All Speakers"])
         self.cast = chromecasts[0]
         self.cast.wait()
         

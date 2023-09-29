@@ -34,7 +34,7 @@ class ThreadedConsumer(threading.Thread):
         #session_id = o["session_id"]
         #order = o["sentance_index"]
 
-        print(f"Processing sentence: {sentence}")
+        print(f"Processing sentence: {sentence}", flush=True)
         try:
             request_obj = {"voice_id": voice_id, "text": sentence}
             headers = {
@@ -52,7 +52,7 @@ class ThreadedConsumer(threading.Thread):
             data_obj.update(d)
             channel.basic_publish(exchange='', routing_key=QUEUE_OUT_NAME, body=json.dumps(data_obj))
         except requests.RequestException as e:
-            print(f"Error calling TTS service: {e}")
+            print(f"Error calling TTS service: {e}", flush=True)
         finally:
             connection.close()
 

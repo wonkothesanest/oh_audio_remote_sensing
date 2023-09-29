@@ -11,8 +11,6 @@ import configparser
 import json
 import threading
 
-from traitlets import Integer
-
 app = Flask(__name__)
 
 config = configparser.ConfigParser()
@@ -47,7 +45,6 @@ def chatgpt():
     max_tokens = data.get('max_tokens', 250)
     voice_id = data.get('voice_id', '774437df-2959-4a01-8a44-a93097f8e8d5')
     __init_cache(voice_id)
-    __add_to_cache("user", voice_id, text)
 
     overall_result = ""
     full_result = ""
@@ -59,7 +56,7 @@ def chatgpt():
     channel.queue_declare(queue='chatgpt_stream')
     channel.queue_declare(queue='chatgpt_response')
 
-    messages = __setup_messages(max_tokens, model, assistant_prompt)
+    messages = __setup_messages(max_tokens, model, voice_id, assistant_prompt, text)
 
     # Connect to ChatGPT API in streaming mode
     response = openai.ChatCompletion.create(
@@ -68,6 +65,7 @@ def chatgpt():
         max_tokens=max_tokens,
         stream=True
     )
+    __add_to_cache("user", voice_id, text)
     print("processed response")
 
     session_id = str(uuid.uuid4())
@@ -94,7 +92,7 @@ def chatgpt():
         channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
         sentence_order += 1
 
-    channel.basic_publish(exchange='', routing_key='chatgpt_response', body=full_result)
+    channel.basic_publish(exchange='', routing_key='chatgpt_response', body=json.dumps({'request': text, 'response': full_result}))
     __add_to_cache("assistant", voice_id, full_result)
 
     connection.close()
@@ -115,7 +113,7 @@ def __add_to_cache(role: str, voice_id: str, value: str)->None:
     cache[voice_id].append(message)
     cache_semaphore.release()
 
-def __get_token_count(search_string: str) -> Integer:
+def __get_token_count(search_string: str) -> int:
     for a in max_total_tokens_search_terms:
         if(a[0] in search_string):
             return a[1]
@@ -134,7 +132,7 @@ def __prune_cache_messages():
 def __count_tokens(string: str):
     return int(len(string) / 3)
 
-def __setup_messages(max_tokens:Integer, model: str, voice_id: str, assistant_prompt: str, text: str):
+def __setup_messages(max_tokens:int, model: str, voice_id: str, assistant_prompt: str, text: str):
     __prune_cache_messages()
     
     additional_prompt = f"\n keep your response to less than {int(max_tokens/1.7)} words"
@@ -149,7 +147,7 @@ def __setup_messages(max_tokens:Integer, model: str, voice_id: str, assistant_pr
         tokens_left -= len(c[i]["content"])
         if tokens_left <= 0:
             break
-        messages.append({"role": c["role"], "content": c["content"]})
+        messages.append({"role": c[i]["role"], "content": c[i]["content"]})
 
     messages.append({"role": "user", "content": text})
     print(messages)
