@@ -37,7 +37,7 @@ def start_udp_audio_stream(port, stream_name):
         udp_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         udp_socket.bind((UDP_IP, port))
     
-        print(f"Listening for audio data from UDP on port {port}...")
+        print(f"Listening for audio data from UDP on port {port}...", flush=True)
     
         # Open the FIFO file for writing
         with open(fifo_file, 'wb') as fifo:
@@ -48,12 +48,12 @@ def start_udp_audio_stream(port, stream_name):
                         # Write the data to the FIFO file
                         fifo.write(data)
                 except Exception as e:
-                    print(f"An error occurred: {e}")
-                    print("Continuing with the audio streaming...")
+                    print(f"An error occurred: {e}", flush=True)
+                    print("Continuing with the audio streaming...", flush=True)
     
         # Unload the pipe-source module when we're done
         # pulse.module_unload('module-pipe-source')
-        print(f"Finished audio streaming on port {port}, goodbye")
+        print(f"Finished audio streaming on port {port}, goodbye", flush=True)
     
 if __name__ == "__main__":
     # Start multiple audio streams by calling the function with different ports and stream names

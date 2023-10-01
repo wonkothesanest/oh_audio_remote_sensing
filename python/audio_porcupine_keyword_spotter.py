@@ -79,21 +79,26 @@ def process_data(data, handle, source_name):
 
 
 def listen_to_source(source_name):
-    print("Listening to " + source_name)
-
-    normal_handle = pvporcupine.create(
-        access_key=secret_key,
-        keywords=keywords,
-        keyword_paths=model_paths
-    )
-    # Create a new PulseAudio client
-    with pasimple.PaSimple(pasimple.PA_STREAM_RECORD, pasimple.PA_SAMPLE_S16LE, CHANNELS, SAMPLE_RATE, device_name=source_name) as pa:
+    while True:
+        try:
+            print("Listening to " + source_name, flush=True)
     
-        while True:
-            data = pa.read(PACKET_SIZE)
-            # Now 'samples' is a NumPy array containing the audio data
-            handle = normal_handle
-            process_data(data, handle, source_name)
+            normal_handle = pvporcupine.create(
+                access_key=secret_key,
+                keywords=keywords,
+                keyword_paths=model_paths
+            )
+            # Create a new PulseAudio client
+            with pasimple.PaSimple(pasimple.PA_STREAM_RECORD, pasimple.PA_SAMPLE_S16LE, CHANNELS, SAMPLE_RATE, device_name=source_name) as pa:
+                while True:
+                    data = pa.read(PACKET_SIZE)
+                    # Now 'samples' is a NumPy array containing the audio data
+                    handle = normal_handle
+                    process_data(data, handle, source_name)
+        except Exception as e:
+            print(f"Error handling stream {source_name} with error: {e}", flush=True)
+            time.sleep(60)
+            pass
 
 
 def start_service():
