@@ -5,8 +5,6 @@ ROOT_DIR=$(dirname $(dirname $(realpath $0)))
 
 echo "[Unit]
 Description=Starts Flask server on 5002 to serve a tts service locally using coqui
-After=networking.service
-Requires=networking.service
 
 [Service]
 ExecStart=${ROOT_DIR}/scripts/wonko_start_server.sh
