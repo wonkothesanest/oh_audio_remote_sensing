@@ -43,7 +43,7 @@ def chatgpt():
     assistant_prompt = data.get('assistant_prompt', "You are a helpful assistant.")
     model = data.get('model', "gpt-4")
     max_tokens = data.get('max_tokens', 250)
-    voice_id = data.get('voice_id', '774437df-2959-4a01-8a44-a93097f8e8d5')
+    voice_id = data.get('voice_id', 'gregorovich')
     __init_cache(voice_id)
 
     overall_result = ""
@@ -80,13 +80,14 @@ def chatgpt():
         overall_result += chunk
         full_result += chunk
 
-        sentence = extract_full_sentence(overall_result)
-        while sentence:
-            overall_result = overall_result[len(sentence):]
-            data = {"voice_id": voice_id, "text": sentence, "sentance_index": sentence_order, "session_id":session_id}
-            channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
-            sentence_order += 1
+        if(sentence_order==0):
             sentence = extract_full_sentence(overall_result)
+            while sentence:
+                overall_result = overall_result[len(sentence):]
+                data = {"voice_id": voice_id, "text": sentence, "sentance_index": sentence_order, "session_id":session_id}
+                channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
+                sentence_order += 1
+                sentence = extract_full_sentence(overall_result)
     if(overall_result != None and overall_result != ""):
         data = {"voice_id": voice_id, "text": overall_result, "sentance_index": sentence_order, "session_id":session_id}
         channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
@@ -135,7 +136,7 @@ def __count_tokens(string: str):
 def __setup_messages(max_tokens:int, model: str, voice_id: str, assistant_prompt: str, text: str):
     __prune_cache_messages()
     
-    additional_prompt = f"\n keep your response to less than {int(max_tokens/1.7)} words"
+    additional_prompt = f"\n keep your response to less than {int(max_tokens/1.7)} words. \n Any numbers in any answer you give should be spelled out as words. "
     assistant_prompt = assistant_prompt + additional_prompt
     tokens_left = __get_token_count(model)
     tokens_left -= __count_tokens(text) - __count_tokens(assistant_prompt) - max_tokens

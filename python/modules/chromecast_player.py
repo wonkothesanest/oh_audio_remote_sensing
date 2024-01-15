@@ -30,10 +30,10 @@ class ChromecastPlayer(object):
         
 
     def play_next(self, url, index, session_id):
-        print(f"Requesting {session_id} Track Number {index} to play {url}")
+        print(f"Requesting {session_id} Track Number {index} to play {url}", flush=True)
         # If a new session ID comes in, evict the old session
         if session_id != self.current_session_id:
-            print("Clearing the cache")
+            print("Clearing the cache", flush=True)
             self.cache.clear()
             self.current_session_id = session_id
             self.expected_index = 0
@@ -58,8 +58,8 @@ class ChromecastPlayer(object):
                 time.sleep(0.1)
                 isPlaying = self.__isPlaying()
 
-            print(f"Playing index {self.expected_index} and will be enqueueing with {isPlaying}")
-            self.cast.media_controller.play_media(url, "audio/mp3", enqueue=isPlaying)
+            print(f"Playing index {self.expected_index} and will be enqueueing with {isPlaying}", flush=True)
+            self.cast.media_controller.play_media(url, "audio/wav", enqueue=isPlaying)
             self.expected_index += 1
             self.cast_semaphore.release()
         

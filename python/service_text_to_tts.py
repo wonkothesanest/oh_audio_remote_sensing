@@ -7,8 +7,6 @@ import requests
 import configparser
 import json
 
-RABBIT_URL = 'amqp://nuvihermoth:D0nn1eDarkoisRabbitFrank@rabbit-cluster-external-stage-1443209739.us-east-1.elb.amazonaws.com'
-# ROUTING_KEY = 'throttle.compact_social_activity.throttled'
 QUEUE_IN_NAME = 'chatgpt_stream'
 QUEUE_OUT_NAME = 'coqui_tts_response'
 # EXCHANGE = 'events'
@@ -30,6 +28,7 @@ class ThreadedConsumer(threading.Thread):
     def call_tts(self, ch, method, properties, body):
         data_obj = json.loads(body)
         sentence = data_obj["text"]
+        sentence = requests.utils.requote_uri(sentence)
         voice_id = data_obj["voice_id"]
         #session_id = o["session_id"]
         #order = o["sentance_index"]
@@ -42,19 +41,22 @@ class ThreadedConsumer(threading.Thread):
                 "content-type": "application/json",
                 "authorization": f"Bearer {coqui_key}"
             }
-            response = requests.post("https://app.coqui.ai/api/v2/samples", json=request_obj, headers=headers)
+            # response = requests.post("https://app.coqui.ai/api/v2/samples", json=request_obj, headers=headers)
+
+            d = {"audio_url": f"http://192.168.0.102:5002/api/tts?text={sentence}&speaker_id={voice_id}"}
             # Handle response here and send to another RabbitMQ queue for the next program
             connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             channel = connection.channel()
             channel.queue_declare(queue=QUEUE_OUT_NAME)
-            d = json.loads(response.content)
+            # d = json.loads(response.content)
             # Update will replace the values in the passed in object
             data_obj.update(d)
             channel.basic_publish(exchange='', routing_key=QUEUE_OUT_NAME, body=json.dumps(data_obj))
         except requests.RequestException as e:
             print(f"Error calling TTS service: {e}", flush=True)
         finally:
-            connection.close()
+            if(connection):
+                connection.close()
 
     def run(self):
         print ('starting thread to consume from rabbitmq...')

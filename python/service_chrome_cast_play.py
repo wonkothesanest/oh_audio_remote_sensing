@@ -14,7 +14,7 @@ def write_audio_to_fifo(ch, method, properties, body):
     global pp
     try:
         tts_response = json.loads(body.decode('utf-8'))
-        print(f"received wav {tts_response}")
+        print(f"received wav {tts_response}", flush=True)
         pp.play_next(tts_response["audio_url"], tts_response["sentance_index"], tts_response["session_id"])
     except:
         pp = ChromecastPlayer()
