@@ -93,7 +93,7 @@ def chatgpt():
         channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
         sentence_order += 1
 
-    channel.basic_publish(exchange='', routing_key='chatgpt_response', body=json.dumps({'request': text, 'response': full_result}))
+    channel.basic_publish(exchange='', routing_key='chatgpt_response', body=json.dumps({'request': text, 'response': full_result, 'voice': voice_id, "timestamp": int(datetime.datetime.now().timestamp())}))
     __add_to_cache("assistant", voice_id, full_result)
 
     connection.close()
@@ -156,4 +156,4 @@ def __setup_messages(max_tokens:int, model: str, voice_id: str, assistant_prompt
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="0.0.0.0")
+    app.run(debug=False, host="0.0.0.0")
