@@ -35,9 +35,9 @@ class StreamingServer(object):
             print(f"these cache key {cache_key} in {self.cache.keys()}", flush=True)
             self.semaphore.release()
             if(is_last_frame):
-                for k in self.cache.keys():
-                    if(k[0] == session_id):
-                        del self.cache[k]
+            #    for k in self.cache.keys():
+            #        if(k[0] == session_id):
+            #            del self.cache[k]
                 return
 
             if cache_key in self.cache:
@@ -51,9 +51,10 @@ class StreamingServer(object):
                     buffer.seek(0)
                     with wave.open(buffer, 'rb') as wave_file:
                         yield wave_file.readframes(wave_file.getnframes())
+                time.sleep(2)
                 if("is_last" in self.cache[cache_key].keys() and self.cache[cache_key]["is_last"]):
                     is_last_frame = True
-                del self.cache[cache_key]
+                #del self.cache[cache_key]
                 self.semaphore.release()
 
                 if(datetime.datetime.now() - start_time >= datetime.timedelta(minutes=MAXIMUM_CONNECTION_MINUTES)):
@@ -65,11 +66,17 @@ class StreamingServer(object):
                 time.sleep(1)
             is_first_frame = False
 
+
 @app.route('/api/stream')
 def stream_audio():
     session_id = request.args.get('session_id')
     print(f"we have a consumer of the stream {session_id}", flush=True)
-    return Response(stream.generate(session_id=session_id), mimetype="audio/wav")
+    #response = Response(stream.generate(session_id=session_id), mimetype="audio/wav")
+    response = Response(stream.generate(session_id=session_id), mimetype="audio/wav")
+    response.headers['Content-Type'] = 'audio/wav'
+    response.headers['Content-Disposition'] = 'attachment; filename=sound.wav'
+    
+    return response
 
 def create_silence(duration=.5, sample_rate=24000, channels=1, first=False):
     try:

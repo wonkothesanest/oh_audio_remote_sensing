@@ -59,7 +59,7 @@ class ChromecastPlayer(object):
                 isPlaying = self.__isPlaying()
 
             print(f"Playing index {self.expected_index} and will be enqueueing with {isPlaying}", flush=True)
-            self.cast.media_controller.play_media(url, "audio/wav", enqueue=isPlaying)
+            self.cast.media_controller.play_media(url, "audio/wav", stream_type="LIVE", enqueue=isPlaying)
             self.expected_index += 1
             self.cast_semaphore.release()
         
