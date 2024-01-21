@@ -12,6 +12,7 @@ from modules.chromecast_player import ChromecastPlayer
 def media_status_listener(media_status):
     print(f"Media Status: {media_status}")
     if(not pp.cast.media_controller.status.player_is_playing  and pp.current_session_id is not None):
+        channel = connection.channel()
         channel.basic_publish('', AUDIO_DESIRED_QUEUE, json.dumps({"session_id": pp.current_session_id}))
 
 
@@ -43,6 +44,6 @@ def request_more_audio(session_id:str):
 if __name__ == "__main__":
     print("starting up chrome player listener")
     channel.queue_declare(queue=AUDIO_STREAM_QUEUE)
-    channel.basic_consume(queue=AUDIO_STREAM_QUEUE, on_message_callback=queue_up_audio, auto_ack=True)
     channel.queue_declare(queue=AUDIO_DESIRED_QUEUE)
+    channel.basic_consume(queue=AUDIO_STREAM_QUEUE, on_message_callback=queue_up_audio, auto_ack=True)
     channel.start_consuming()
