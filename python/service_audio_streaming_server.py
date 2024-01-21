@@ -13,6 +13,7 @@ import json
 
 app = Flask(__name__)
 MAXIMUM_CONNECTION_MINUTES = 5
+QUEUE_NAME = 'coqui_tts_response'
 
 class StreamingServer(object):
     def __init__(self) -> None:
@@ -50,7 +51,7 @@ class StreamingServer(object):
                     buffer.seek(0)
                     with wave.open(buffer, 'rb') as wave_file:
                         yield wave_file.readframes(wave_file.getnframes())
-                if(self.cache[cache_key]["is_last"]):
+                if("is_last" in self.cache[cache_key].keys() and self.cache[cache_key]["is_last"]):
                     is_last_frame = True
                 del self.cache[cache_key]
                 self.semaphore.release()
@@ -67,6 +68,7 @@ class StreamingServer(object):
 @app.route('/api/stream')
 def stream_audio():
     session_id = request.args.get('session_id')
+    print(f"we have a consumer of the stream {session_id}", flush=True)
     return Response(stream.generate(session_id=session_id), mimetype="audio/wav")
 
 def create_silence(duration=.5, sample_rate=24000, channels=1, first=False):
@@ -107,34 +109,39 @@ class ThreadedConsumer(threading.Thread):
         self.connection = pika.BlockingConnection(parameters)
         self.channel = self.connection.channel()
         self.stream = streamer
-        self.channel.queue_declare(queue='coqui_tts_response_temp')
-        self.channel.basic_consume(queue='coqui_tts_response_temp', on_message_callback=self.callback, auto_ack=True)
+        self.channel.queue_declare(queue=QUEUE_NAME)
+        self.channel.basic_consume(queue=QUEUE_NAME, on_message_callback=self.callback, auto_ack=True)
 
         # Declare the queue
 
 
     def callback(self, ch, method, properties, body):
         # Decode the message
-        message = json.loads(body)
-
-        # Extract needed data
-        audio_url = message['audio_url']
-        session_id = message['session_id']
-        sentence_index = message['sentence_index']
-        is_last = False
-        if("is_last" in message.keys()):
-            is_last = message['is_last']
-
-        # Download the audio data
-        response = requests.get(audio_url)
-        audio_data = response.content
-
-        # Store in cache
-        self.stream.semaphore.acquire()
-        self.stream.cache[(session_id, sentence_index)] = { "data": audio_data, is_last: is_last}
-        print(f"Stored audio for session {session_id}, sentence {sentence_index} new keys {self.stream.cache.keys()} thread {threading.current_thread()}")
-        self.stream.semaphore.release()
-
+        try:
+            message = json.loads(body)
+    
+            print(body, flush=True)
+            # Extract needed data
+            audio_url = message['audio_url']
+            session_id = message['session_id']
+            sentence_index = message['sentance_index']
+            is_last = False
+            if("is_last" in message.keys()):
+                is_last = message['is_last']
+    
+            # Download the audio data
+            response = requests.get(audio_url)
+            audio_data = response.content
+    
+            # Store in cache
+            self.stream.semaphore.acquire()
+            self.stream.cache[(session_id, sentence_index)] = { "data": audio_data, "is_last": is_last}
+            print(f"Stored audio for session {session_id}, sentence {sentence_index} new keys {self.stream.cache.keys()} thread {threading.current_thread()}", flush=True)
+            self.stream.semaphore.release()
+        except:
+            print("Something went wrong")
+            pass
+    
 
 
     def run(self):
@@ -152,5 +159,5 @@ if __name__ == "__main__":
     tc = ThreadedConsumer(stream)
     tc.start()
 
-    app.run(debug=False)
+    app.run(debug=False, host="0.0.0.0", port=5099)
 
