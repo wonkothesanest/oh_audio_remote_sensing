@@ -9,6 +9,7 @@ import requests
 import wave
 import threading
 import json
+from pydub import AudioSegment
 
 
 app = Flask(__name__)
@@ -42,6 +43,7 @@ class StreamingServer(object):
 
             if cache_key in self.cache:
                 # Stream the current audio part
+                frame_count = len(self.cache[cache_key]["data"])
                 self.semaphore.acquire()
                 if(is_first_frame):
                     yield self.cache[cache_key]["data"]
@@ -51,7 +53,8 @@ class StreamingServer(object):
                     buffer.seek(0)
                     with wave.open(buffer, 'rb') as wave_file:
                         yield wave_file.readframes(wave_file.getnframes())
-                time.sleep(2)
+                print(frame_count)
+                time.sleep(frame_count/24000)
                 if("is_last" in self.cache[cache_key].keys() and self.cache[cache_key]["is_last"]):
                     is_last_frame = True
                 #del self.cache[cache_key]
