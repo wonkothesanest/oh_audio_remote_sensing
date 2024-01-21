@@ -12,7 +12,7 @@ from modules.chromecast_player import ChromecastPlayer
 
 def media_status_listener(media_status):
     print(f"Media Status: {media_status}")
-    if(not pp.cast.media_controller.player_is_playing() and pp.current_session_id is not None):
+    if(not pp.cast.media_controller.player_is_playing and pp.current_session_id is not None):
         channel.basic_publish('', AUDIO_DESIRED_QUEUE, json.dumps({"session_id": pp.current_session_id}))
 
 
