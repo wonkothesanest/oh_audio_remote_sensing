@@ -25,12 +25,12 @@ connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
 channel = connection.channel()
 
 def queue_up_audio(ch, method, properties, body):
+    global pp
     try:
         tts_response = json.loads(body.decode('utf-8'))
         print(f"received wav {tts_response}", flush=True)
         pp.play_next(tts_response["audio_url"], tts_response["session_id"])
     except:
-        global pp
         pp = ChromecastPlayer(media_status_listener)
         pp.play_next(tts_response["audio_url"], tts_response["session_id"])
         pass

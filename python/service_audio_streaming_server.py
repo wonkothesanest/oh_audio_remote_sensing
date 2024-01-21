@@ -107,6 +107,7 @@ class ThreadedConsumer(threading.Thread):
 
 
     def tts_audio_ready_callback(self, ch, method, properties, body):
+        global known_sessions
         # Decode the message
         try:
             message = json.loads(body)
@@ -126,7 +127,6 @@ class ThreadedConsumer(threading.Thread):
 
             if(session_id not in known_sessions.keys()):
                 with known_sessions_lock:
-                    global known_sessions
                     a = AudioStreamSession(session_id)
                     known_sessions[session_id] = a
             known_sessions[session_id].set_in_cache(sentence_index, data=audio_data, is_last=is_last)
