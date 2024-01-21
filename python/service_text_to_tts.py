@@ -35,20 +35,12 @@ class ThreadedConsumer(threading.Thread):
 
         print(f"Processing sentence: {sentence}", flush=True)
         try:
-            request_obj = {"voice_id": voice_id, "text": sentence}
-            headers = {
-                "accept": "application/json",
-                "content-type": "application/json",
-                "authorization": f"Bearer {coqui_key}"
-            }
-            # response = requests.post("https://app.coqui.ai/api/v2/samples", json=request_obj, headers=headers)
-
-            d = {"audio_url": f"http://192.168.0.102:5005/api/tts?text={sentence}&speaker_id={voice_id}"}
+            d = {"audio_url": f"http://wonko:5005/api/tts?text={sentence}&speaker_id={voice_id}"}
             # Handle response here and send to another RabbitMQ queue for the next program
             connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             channel = connection.channel()
             channel.queue_declare(queue=QUEUE_OUT_NAME)
-            # d = json.loads(response.content)
+
             # Update will replace the values in the passed in object
             data_obj.update(d)
             channel.basic_publish(exchange='', routing_key=QUEUE_OUT_NAME, body=json.dumps(data_obj))

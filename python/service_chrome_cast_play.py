@@ -10,7 +10,9 @@ pp = ChromecastPlayer()
 response_map = {}
 pp = ChromecastPlayer()
 
-def write_audio_to_fifo(ch, method, properties, body):
+queue_name = 'audio_stream'
+
+def queue_up_audio(ch, method, properties, body):
     global pp
     try:
         tts_response = json.loads(body.decode('utf-8'))
@@ -24,6 +26,6 @@ if __name__ == "__main__":
     print("starting up chrome player listener")
     connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
     channel = connection.channel()
-    channel.queue_declare(queue='coqui_tts_response')
-    channel.basic_consume(queue='coqui_tts_response', on_message_callback=write_audio_to_fifo, auto_ack=True)
+    channel.queue_declare(queue=queue_name)
+    channel.basic_consume(queue=queue_name, on_message_callback=queue_up_audio, auto_ack=True)
     channel.start_consuming()
