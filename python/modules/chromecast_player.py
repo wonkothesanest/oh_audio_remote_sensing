@@ -37,7 +37,7 @@ class ChromecastPlayer(object):
         self.cast.media_controller.play_media(url, "audio/wav", enqueue=isPlaying)
         
     def __isPlaying(self) -> Boolean:
-        return self.cast.media_controller.player_is_playing
+        return self.cast.media_controller.status.player_is_playing
         
 
     def __reset_connection(self):
