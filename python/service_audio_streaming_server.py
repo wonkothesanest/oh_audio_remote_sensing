@@ -29,7 +29,7 @@ AUDIO_DESIRED_QUEUE = 'audio_stream_wanted'
 AUDIO_READY_QUEUE = 'audio_stream'
 AUDIO_BASE_DIR = "/home/dusty/audio"
 PORT = 2525
-HOST_NAME = f"http://orangepi5b:{PORT}"
+HOST_NAME = f"http://192.168.0.42:{PORT}"
 Handler = http.server.SimpleHTTPRequestHandler
 
 known_sessions_lock = threading.Lock()
@@ -40,6 +40,7 @@ class AudioStreamSession(object):
         self._cache = {}  # Cache to store audio data segments
         self.session_id = session_id
         self.is_done = False
+        self.audio_lock = threading.Lock()
         self._current_file_index = 0
         self._current_session_index = 0
         self._last_index = -1
@@ -55,7 +56,9 @@ class AudioStreamSession(object):
 
 
     def write_to_file(self):
+        print(f"Writing to file for {self.session_id} and {self._current_session_index}", flush=True)
         with self.audio_lock:
+            print("got the lock")
             # Check for the next contiguous segment
             if self._current_session_index not in self._cache:
                 return None  # Stop if there's a gap
@@ -127,8 +130,7 @@ class ThreadedConsumer(threading.Thread):
 
             if(session_id not in known_sessions.keys()):
                 with known_sessions_lock:
-                    a = AudioStreamSession(session_id)
-                    known_sessions[session_id] = a
+                    known_sessions[session_id] = AudioStreamSession(session_id)
             known_sessions[session_id].set_in_cache(sentence_index, data=audio_data, is_last=is_last)
 
             if(sentence_index == 0):
