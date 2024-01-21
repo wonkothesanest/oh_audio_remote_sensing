@@ -40,6 +40,7 @@ def extract_full_sentence(overall_result):
 def chatgpt():
     data = request.json
     text = data.get('text')
+    print(f"Going to process the request {text}", flush=True)
     assistant_prompt = data.get('assistant_prompt', "You are a helpful assistant.")
     model = data.get('model', "gpt-4")
     max_tokens = data.get('max_tokens', 250)

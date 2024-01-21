@@ -21,9 +21,12 @@ import socketserver
 import threading
 import time
 
+# Could improve even further by guessing when the player will be done? no better for the player to ask this of us
+# and have it guess when the audio will be done playing. But then again, it doesn't know now long the audio is.
 
 app = Flask(__name__)
 MAXIMUM_CONNECTION_MINUTES = 5
+THREADS=5
 TTS_READY_QUEUE_NAME = 'coqui_tts_response'
 AUDIO_DESIRED_QUEUE = 'audio_stream_wanted'
 AUDIO_READY_QUEUE = 'audio_stream'
@@ -37,6 +40,7 @@ known_sessions = {}
 
 class AudioStreamSession(object):
     def __init__(self, session_id: str) -> None:
+        print(f"Creating Audio Stream Session for {session_id}", flush=True)
         self._cache = {}  # Cache to store audio data segments
         self.session_id = session_id
         self.is_done = False
@@ -47,6 +51,7 @@ class AudioStreamSession(object):
         self._stored_files = []
 
     def set_in_cache(self, session_index: int, data: bytes, is_last: bool = False):
+        print(f"Setting this index into cache {session_index} is it last? {is_last}", flush=True)
         # Store the audio data in the cache with its session index
         self._cache[session_index] = data
 
@@ -57,8 +62,8 @@ class AudioStreamSession(object):
 
     def write_to_file(self):
         print(f"Writing to file for {self.session_id} and {self._current_session_index}", flush=True)
+        print(f"    The keys in the cache are {self._cache.keys()}", flush=True)
         with self.audio_lock:
-            print("got the lock")
             # Check for the next contiguous segment
             if self._current_session_index not in self._cache:
                 return None  # Stop if there's a gap
@@ -81,6 +86,7 @@ class AudioStreamSession(object):
             file_name = f"{self.session_id}-{self._current_file_index}.wav"
             file_path = os.path.join(base_dir, file_name)
             combined_audio.export(file_path, format="wav")
+            print(f"Wrote out contents to file {file_path}.", flush=True)
             self._stored_files.append(file_name)
             self._current_file_index += 1
             # Update the current_session_index
@@ -115,7 +121,7 @@ class ThreadedConsumer(threading.Thread):
         try:
             message = json.loads(body)
     
-            print(body, flush=True)
+            print(f"New audio is ready for processing {body}", flush=True)
             # Extract needed data
             audio_url = message['audio_url']
             session_id = message['session_id']
@@ -144,8 +150,8 @@ class ThreadedConsumer(threading.Thread):
         # when we want an audio bit, we take what we have and write it to a file
         # Then we emit an audio ready message with its location (served by http.server)
         message = json.loads(body)
+        print(f"The player is finished playing it wants more {body}", flush=True)
 
-        print(body, flush=True)
         # Extract needed data
         session_id = message['session_id']
         if(session_id not in known_sessions.keys()):
@@ -192,8 +198,11 @@ def start_server(directory):
 
 if __name__ == "__main__":
     # Set up the consumer
-    tc = ThreadedConsumer()
-    tc.start()
+
+    for i in range(THREADS):
+        # nifty trick as pika is not naturally thread safe.
+        print ('launch thread', i)
+        td = ThreadedConsumer()
+        td.start()
     start_server(AUDIO_BASE_DIR)
-    tc.join()
 
