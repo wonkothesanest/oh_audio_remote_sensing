@@ -154,6 +154,8 @@ class ThreadedConsumer(threading.Thread):
         
     def _write_and_publish(self, session: AudioStreamSession, message: json):
         file_name = session.write_to_file()
+        if(file_name is None):
+            return
         message["filename"] = file_name
         message["audio_url"] = f"{HOST_NAME}/{file_name}"
         self.channel.basic_publish('', AUDIO_READY_QUEUE, json.dumps(message))
