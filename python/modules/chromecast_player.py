@@ -5,6 +5,7 @@ import pychromecast
 import zeroconf
 import time
 import threading
+from  pychromecast.controllers.media import MediaStatusListener
 
 class ChromecastPlayer(object):
     def __init__(self, on_mc_status_callback) -> None:
@@ -24,7 +25,7 @@ class ChromecastPlayer(object):
         chromecasts, browser = pychromecast.get_listed_chromecasts(friendly_names=["All Speakers"])
         self.cast = chromecasts[0]
         self.cast.wait()
-        self.cast.media_controller.register_status_listener(self.on_mc_status_callback)
+        self.cast.media_controller.register_status_listener(MyMediaStatusListener("default", self.cast, self.on_mc_status_callback))
         
 
     def play_next(self, url, session_id: str):
@@ -51,3 +52,17 @@ class ChromecastPlayer(object):
                     self.cast_lock.release()
             except:
                 continue
+
+class MyMediaStatusListener(MediaStatusListener):
+    """Status media listener"""
+
+    def __init__(self, name, cast, callback):
+        self.name = name
+        self.cast = cast
+        self.callback = callback
+
+    def new_media_status(self, status):
+        self.callback(status)
+
+    def load_media_failed(self, item, error_code):
+        print(f"Load media failed {item} and {error_code}")

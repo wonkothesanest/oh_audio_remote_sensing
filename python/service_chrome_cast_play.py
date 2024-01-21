@@ -5,7 +5,6 @@ import os
 import json
 import sys
 
-import pychromecast
 from modules.chromecast_player import ChromecastPlayer
 
 
@@ -38,6 +37,7 @@ def request_more_audio(session_id:str):
     msg = {}
     msg['session_id'] = session_id
     channel.basic_publish('', AUDIO_DESIRED_QUEUE, json.dumps(msg))
+
 
 
 if __name__ == "__main__":

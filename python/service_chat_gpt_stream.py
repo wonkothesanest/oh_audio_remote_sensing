@@ -98,10 +98,6 @@ def chatgpt():
     channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
     sentence_order += 1
 
-    # HEY EVERYBODY!! NEW STREAM TO LISTEN TO!!!
-    stream_msg = {"session_id": session_id, "audio_url": f"http://192.168.0.42:5099/api/stream?session_id={session_id}&voice_id={voice_id}", "sentance_index": 0}
-    channel.basic_publish(exchange='', routing_key='audio_stream', body=json.dumps(stream_msg))
-
     channel.basic_publish(exchange='', routing_key='chatgpt_response', body=json.dumps({'request': text, 'response': full_result, 'voice': voice_id, "timestamp": int(datetime.datetime.now().timestamp())}))
     __add_to_cache("assistant", voice_id, full_result)
 
