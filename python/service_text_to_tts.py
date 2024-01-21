@@ -43,7 +43,7 @@ class ThreadedConsumer(threading.Thread):
             }
             # response = requests.post("https://app.coqui.ai/api/v2/samples", json=request_obj, headers=headers)
 
-            d = {"audio_url": f"http://192.168.0.102:5002/api/tts?text={sentence}&speaker_id={voice_id}"}
+            d = {"audio_url": f"http://192.168.0.102:5005/api/tts?text={sentence}&speaker_id={voice_id}"}
             # Handle response here and send to another RabbitMQ queue for the next program
             connection = pika.BlockingConnection(pika.ConnectionParameters('localhost'))
             channel = connection.channel()

@@ -80,7 +80,7 @@ def chatgpt():
         overall_result += chunk
         full_result += chunk
 
-        if(sentence_order==0):
+        if(sentence_order==0 or True):
             sentence = extract_full_sentence(overall_result)
             while sentence:
                 overall_result = overall_result[len(sentence):]
