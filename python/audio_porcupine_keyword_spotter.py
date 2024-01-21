@@ -12,6 +12,9 @@ import pulsectl
 import sounddevice as sd
 from datetime import datetime
 import configparser
+import tracemalloc as tm
+
+tm.start()
 
 # MQTT broker and topic
 mqtt_broker_host = 'master-blaster'
@@ -93,13 +96,24 @@ def listen_to_source(source_name):
                 while True:
                     data = pa.read(PACKET_SIZE)
                     # Now 'samples' is a NumPy array containing the audio data
-                    handle = normal_handle
-                    process_data(data, handle, source_name)
+                    process_data(data, normal_handle, source_name)
         except Exception as e:
             print(f"Error handling stream {source_name} with error: {e}", flush=True)
+            snap2 = tm.take_snapshot()
+
+            try:
+                print_snaps(source_name, snap1, snap2)
+            except:
+                pass
+            snap1 = tm.take_snapshot()
             time.sleep(60)
             pass
 
+def print_snaps(name, snap1, snap2):
+    for e in snap2.compare_to(snap1, 'filename')[:10]:
+        print(f"filename: {name}: {e}")
+    for e in snap2.compare_to(snap1, 'size')[:10]:
+        print(f"size: {name}: {e}")
 
 def start_service():
     # Replace these with your actual sink names
