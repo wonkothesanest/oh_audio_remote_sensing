@@ -110,10 +110,11 @@ def listen_to_source(source_name):
             pass
 
 def print_snaps(name, snap1, snap2):
-    for e in snap2.compare_to(snap1, 'filename')[:10]:
-        print(f"filename: {name}: {e}")
-    for e in snap2.compare_to(snap1, 'size')[:10]:
-        print(f"size: {name}: {e}")
+    pass
+    #for e in snap2.compare_to(snap1, 'filename')[:10]:
+    #    print(f"filename: {name}: {e}")
+    #for e in snap2.compare_to(snap1, 'size')[:10]:
+    #    print(f"size: {name}: {e}")
 
 def start_service():
     # Replace these with your actual sink names
