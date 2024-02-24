@@ -29,3 +29,4 @@ spidev==3.5
 ssh-import-id==5.10
 threadpoolctl==3.2.0
 urllib3==1.26.5
+deepspeed==0.10.3
