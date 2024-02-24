@@ -26,6 +26,7 @@ class ThreadedConsumer(threading.Thread):
         threading.Thread(target=self.channel.basic_consume(queue=QUEUE_IN_NAME, on_message_callback=self.call_tts, auto_ack=True))
 
     def call_tts(self, ch, method, properties, body):
+        print(f"   received message")
         data_obj = json.loads(body)
         sentence = data_obj["text"]
         sentence = requests.utils.requote_uri(sentence)
@@ -44,6 +45,7 @@ class ThreadedConsumer(threading.Thread):
             # Update will replace the values in the passed in object
             data_obj.update(d)
             channel.basic_publish(exchange='', routing_key=QUEUE_OUT_NAME, body=json.dumps(data_obj))
+            print(f"    Sent to Queue")
         except requests.RequestException as e:
             print(f"Error calling TTS service: {e}", flush=True)
         finally:

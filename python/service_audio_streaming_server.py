@@ -60,6 +60,18 @@ class AudioStreamSession(object):
             self._last_index = session_index
 
 
+    def check_has_all(self):
+        if self._last_index != -1:
+
+            end_index = self._current_session_index
+            while end_index in self._cache:
+                end_index += 1
+            if end_index >= self._last_index:
+                print(f"    Found that we have all audio pieces writing to file and sending")
+                return True
+        return False
+
+
     def write_to_file(self):
         print(f"Writing to file for {self.session_id} and {self._current_session_index}", flush=True)
         print(f"    The keys in the cache are {self._cache.keys()}", flush=True)
@@ -138,8 +150,9 @@ class ThreadedConsumer(threading.Thread):
                 with known_sessions_lock:
                     known_sessions[session_id] = AudioStreamSession(session_id)
             known_sessions[session_id].set_in_cache(sentence_index, data=audio_data, is_last=is_last)
+            has_all = known_sessions[session_id].check_has_all()
 
-            if(sentence_index == 0):
+            if(sentence_index == 0 or has_all):
                 self._write_and_publish(known_sessions[session_id], message)
         except Exception as e:
             print(f"Something went wrong with recieving audio chunk {e}")
@@ -165,6 +178,7 @@ class ThreadedConsumer(threading.Thread):
         message["filename"] = file_name
         message["audio_url"] = f"{HOST_NAME}/{file_name}"
         self.channel.basic_publish('', AUDIO_READY_QUEUE, json.dumps(message))
+        print(f"    Published {message} to audio stream")
 
 
 

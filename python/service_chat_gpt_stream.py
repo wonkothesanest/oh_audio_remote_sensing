@@ -84,9 +84,11 @@ def chatgpt():
         overall_result += chunk
         full_result += chunk
 
+        print(f"    received chunk {chunk}")
         if(sentence_order==0 or True):
             sentence = extract_full_sentence(overall_result)
             while sentence:
+                print("    Sentence done: {sentence}")
                 overall_result = overall_result[len(sentence):]
                 data = {"voice_id": voice_id, "text": sentence, "sentance_index": sentence_order, "session_id":session_id}
                 channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
@@ -99,6 +101,7 @@ def chatgpt():
     channel.basic_publish(exchange='', routing_key='chatgpt_stream', body=json.dumps(data))
     sentence_order += 1
 
+    print(f"        Full text done: {full_result}")
     channel.basic_publish(exchange='', routing_key='chatgpt_response', body=json.dumps({'request': text, 'response': full_result, 'voice': voice_id, "timestamp": int(datetime.datetime.now().timestamp())}))
     __add_to_cache("assistant", voice_id, full_result)
 
